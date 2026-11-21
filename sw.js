@@ -1,6 +1,6 @@
 // Guarda o app no iPhone para funcionar sem internet.
 // Ao mudar o app, aumente o número da versão abaixo.
-const CACHE = "disciplina-v8";
+const CACHE = "disciplina-v9";
 const FILES = ["./", "index.html", "manifest.json", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {

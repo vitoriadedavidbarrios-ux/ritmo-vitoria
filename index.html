@@ -264,6 +264,7 @@
   <!-- 2. TREINO -->
   <section class="aba" id="aba-treino">
     <div class="aviso" id="avisoTreino"><b>Semana sugerida</b> (a ordem pode mudar): seg A · ter outra modalidade · qua B · qui outra modalidade · sex C · fim de semana livre. Em "Outras modalidades" marque o que fez no dia (pilates, luta ou outra); dá para adicionar novas em "Editar". Evite fazer A e C em dias seguidos. Aqueça 5 min antes. Quando fizer todas as repetições com folga, aumente um pouco a carga e anote em "Editar".</div>
+    <div class="cartao" id="resumoTreinos"></div>
     <div class="chips" id="chipsTreino"></div>
     <div class="cartao">
       <h2><span id="nomeTreino"></span> <button class="acao" id="modoEdicaoTreino">Editar</button></h2>
@@ -567,7 +568,8 @@ function renderHabitos() {
         <span class="${v >= h.meta ? "feito" : ""}">${v}/${h.meta}</span>
         <button data-mais="${h.id}" aria-label="mais">+</button></div></div>`;
     }
-    return `<div class="habito"><div class="nome">${esc(h.nome)}${h.detalhe ? `<small>${esc(h.detalhe)}</small>` : ""}</div>
+    const det = h.id === "treino" && treinosFeitos(dia).length ? treinosFeitos(dia).join(" + ") : h.detalhe;
+    return `<div class="habito"><div class="nome">${esc(h.nome)}${det ? `<small>${esc(det)}</small>` : ""}</div>
       <button class="check ${r[h.id] ? "on" : ""}" data-hab="${h.id}" aria-label="${esc(h.nome)}">${CHECK_SVG}</button></div>`;
   }).join("") || '<div class="vazio">Nenhum hábito. Toque em Editar para adicionar.</div>';
 
@@ -674,9 +676,24 @@ $("#addInjecao").onclick = () => formInjecao();
 /* =========================================================
    2. TREINO
    ========================================================= */
+// Lista do que foi feito no dia: treinos concluídos + modalidades marcadas
+function treinosFeitos(k) {
+  const r = D.registroTreino[k] || {}, feitos = [];
+  D.treinos.forEach((t) => {
+    if (t.id === "O") t.exercicios.forEach((e) => { if (r[e.id]) feitos.push(e.nome); });
+    else if ((r._concluidos || []).includes(t.id)) feitos.push(t.nome);
+  });
+  return feitos;
+}
+function sincronizarHabitoTreino() { regHab(dia).treino = treinosFeitos(dia).length > 0; }
 function renderTreino() {
+  const feitos = treinosFeitos(dia);
+  $("#resumoTreinos").innerHTML = `<h2 style="margin-bottom:4px">Treinos do dia</h2>` + (feitos.length
+    ? `<div>${feitos.map((n) => `<span class="chip on" style="display:inline-block;margin:4px 6px 0 0;padding:6px 12px">✓ ${esc(n)}</span>`).join("")}</div>`
+    : `<p class="nota" style="margin:0">Nenhum ainda. Você pode marcar quantos fizer no mesmo dia.</p>`);
+  const conc = (D.registroTreino[dia] || {})._concluidos || [];
   if (!D.treinos.find((t) => t.id === treinoSel)) treinoSel = D.treinos[0]?.id;
-  $("#chipsTreino").innerHTML = D.treinos.map((t) => `<button class="chip ${t.id === treinoSel ? "on" : ""}" data-t="${t.id}">${esc(t.nome)}</button>`).join("")
+  $("#chipsTreino").innerHTML = D.treinos.map((t) => `<button class="chip ${t.id === treinoSel ? "on" : ""}" data-t="${t.id}">${conc.includes(t.id) ? "✓ " : ""}${esc(t.nome)}</button>`).join("")
     + (editandoTreino ? `<button class="chip" id="novoTreino">+ Novo treino</button>` : "");
   const t = D.treinos.find((x) => x.id === treinoSel);
   $("#modoEdicaoTreino").textContent = editandoTreino ? "Pronto" : "Editar";
@@ -696,7 +713,9 @@ function renderTreino() {
 
   $("#botoesTreino").innerHTML = editandoTreino
     ? `<div class="linha-btns"><button class="btn sec" id="novoEx">+ Exercício</button><button class="btn sec" id="renomearTreino">Renomear / apagar treino</button></div>`
-    : `<div class="linha-btns"><button class="btn cheio" id="concluirTreino">${(D.registroHabitos[dia] || {}).treino ? "✓ Treino do dia marcado" : "Concluí o treino de hoje"}</button></div>`;
+    : t.id === "O"
+      ? `<p class="nota">Marque cada modalidade que fizer hoje. Ela entra em "Treinos do dia".</p>`
+      : `<div class="linha-btns"><button class="btn cheio ${conc.includes(t.id) ? "sec" : ""}" id="concluirTreino">${conc.includes(t.id) ? "✓ " + esc(t.nome) + " concluído (tocar desfaz)" : "Concluí o " + esc(t.nome)}</button></div>`;
 }
 $("#chipsTreino").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
@@ -707,11 +726,15 @@ $("#modoEdicaoTreino").onclick = () => { editandoTreino = !editandoTreino; rende
 $("#aba-treino").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   const t = D.treinos.find((x) => x.id === treinoSel);
-  if (b.dataset.feito) { const r = (D.registroTreino[dia] ||= {}); r[b.dataset.feito] = !r[b.dataset.feito]; salvar(); render(); }
+  if (b.dataset.feito) { const r = (D.registroTreino[dia] ||= {}); r[b.dataset.feito] = !r[b.dataset.feito]; if (t.id === "O") sincronizarHabitoTreino(); salvar(); render(); }
   if (b.dataset.ex) formExercicio(t, b.dataset.ex);
   if (b.id === "novoEx") formExercicio(t);
   if (b.id === "renomearTreino") formTreino(t);
-  if (b.id === "concluirTreino") { const r = regHab(dia); r.treino = !r.treino; salvar(); render(); aviso(r.treino ? "Treino marcado nos hábitos" : "Desmarcado"); }
+  if (b.id === "concluirTreino") {
+    const r = (D.registroTreino[dia] ||= {}), c = (r._concluidos ||= []), i = c.indexOf(t.id);
+    if (i >= 0) c.splice(i, 1); else c.push(t.id);
+    sincronizarHabitoTreino(); salvar(); render(); aviso(i >= 0 ? "Desmarcado" : t.nome + " concluído");
+  }
 });
 function formTreino(t) {
   abrirForm({
