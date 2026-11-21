@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#007BA7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ritmo">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>Ritmo</title>
+<style>
+  :root {
+    --areia: #F4EDE1;
+    --areia-2: #EADFCB;
+    --areia-3: #D9C7A7;
+    --cartao: #FFFBF5;
+    --borda: #E6D9C3;
+    --ceruleo: #007BA7;
+    --ceruleo-esc: #035E80;
+    --ceruleo-cla: #DCEFF6;
+    --texto: #2E2A24;
+    --suave: #7A6F60;
+    --parcial: #C9962B;
+    --parcial-cla: #F7ECD2;
+    --nao: #B5543C;
+    --nao-cla: #F6E1DA;
+    --raio: 16px;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--areia); color: var(--texto); }
+  body {
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+
+  /* Cabeçalho */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--areia);
+    padding: calc(12px + env(safe-area-inset-top)) 16px 10px;
+    border-bottom: 1px solid var(--borda);
+  }
+  .topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .marca { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ceruleo); margin-bottom: 2px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
+  .datas { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+  .datas button.seta {
+    width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--borda);
+    background: var(--cartao); font-size: 18px; color: var(--ceruleo-esc);
+  }
+  .datas .rotulo { flex: 1; text-align: center; font-weight: 600; }
+  .datas .rotulo small { display: block; font-weight: 400; color: var(--suave); font-size: 13px; }
+  .hoje-btn { border: 0; background: none; color: var(--ceruleo); font-weight: 600; padding: 6px; }
+
+  main { padding: 14px 16px; max-width: 620px; margin: 0 auto; }
+  section.aba { display: none; }
+  section.aba.ativa { display: block; }
+
+  .cartao {
+    background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio);
+    padding: 14px; margin-bottom: 14px;
+  }
+  .cartao h2 { font-size: 17px; margin: 0 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .cartao h2 .acao { font-size: 14px; font-weight: 600; color: var(--ceruleo); background: none; border: 0; padding: 4px 0; }
+  .nota { font-size: 13px; color: var(--suave); margin: 6px 0 0; }
+  .aviso {
+    background: var(--ceruleo-cla); color: var(--ceruleo-esc); border-radius: 12px;
+    padding: 10px 12px; font-size: 14px; margin-bottom: 14px;
+  }
+
+  /* Progresso do dia */
+  .resumo { display: flex; align-items: center; gap: 14px; }
+  .anel { width: 64px; height: 64px; flex: none; }
+  .resumo strong { font-size: 20px; display: block; }
+
+  /* Hábitos */
+  .habito {
+    display: flex; align-items: center; gap: 12px; padding: 12px 0;
+    border-top: 1px solid var(--borda);
+  }
+  .habito:first-of-type { border-top: 0; }
+  .habito .nome { flex: 1; }
+  .habito .nome small { display: block; color: var(--suave); font-size: 13px; }
+  .check {
+    width: 34px; height: 34px; border-radius: 10px; border: 2px solid var(--areia-3);
+    background: var(--cartao); display: grid; place-items: center; flex: none; padding: 0;
+  }
+  .check.on { background: var(--ceruleo); border-color: var(--ceruleo); }
+  .check svg { width: 20px; height: 20px; opacity: 0; }
+  .check.on svg { opacity: 1; }
+  .contador { display: flex; align-items: center; gap: 8px; }
+  .contador button {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--borda);
+    background: var(--areia); font-size: 20px; line-height: 1; color: var(--ceruleo-esc);
+  }
+  .contador span { min-width: 44px; text-align: center; font-weight: 600; }
+  .contador span.feito { color: var(--ceruleo); }
+
+  /* Semana */
+  .semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+  .semana .dia { font-size: 12px; color: var(--suave); }
+  .semana .bolinha {
+    margin: 4px auto 0; width: 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 11px; font-weight: 600;
+    background: var(--areia-2); color: var(--suave); border: 2px solid transparent;
+  }
+  .semana .sel .bolinha { border-color: var(--ceruleo-esc); }
+
+  /* Botões */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 600;
+    background: var(--ceruleo); color: #fff; min-height: 44px;
+  }
+  .btn.sec { background: var(--areia-2); color: var(--ceruleo-esc); }
+  .btn.perigo { background: var(--nao-cla); color: var(--nao); }
+  .btn.cheio { width: 100%; }
+  .linha-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .linha-btns .btn { flex: 1; }
+
+  /* Chips */
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; border: 1px solid var(--borda); background: var(--cartao);
+    border-radius: 999px; padding: 8px 14px; font-weight: 600; color: var(--ceruleo-esc);
+  }
+  .chip.on { background: var(--ceruleo); border-color: var(--ceruleo); color: #fff; }
+
+  /* Exercícios */
+  .ex { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--borda); align-items: flex-start; }
+  .ex:first-of-type { border-top: 0; }
+  .ex .info { flex: 1; min-width: 0; }
+  .ex .info b { display: block; }
+  .ex .info span { color: var(--suave); font-size: 14px; }
+  .ex .info em { display: block; font-style: normal; font-size: 13px; color: var(--suave); margin-top: 2px; }
+  .editar-ico {
+    border: 1px solid var(--borda); background: var(--areia); border-radius: 10px;
+    padding: 6px 10px; font-size: 13px; font-weight: 600; color: var(--ceruleo-esc);
+  }
+
+  /* Dieta */
+  .refeicao { border-top: 1px solid var(--borda); padding: 12px 0; }
+  .refeicao:first-of-type { border-top: 0; }
+  .refeicao .cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .refeicao .cab b { font-size: 16px; }
+  .refeicao .cab small { color: var(--suave); }
+  .refeicao .itens { white-space: pre-line; color: var(--suave); font-size: 14px; margin: 4px 0 10px; }
+  .adesao { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .adesao button {
+    border: 1px solid var(--borda); background: var(--cartao); border-radius: 10px;
+    padding: 8px 4px; font-size: 14px; font-weight: 600; color: var(--suave); min-height: 40px;
+  }
+  .adesao button.on.ok { background: var(--ceruleo); border-color: var(--ceruleo); color: #fff; }
+  .adesao button.on.parcial { background: var(--parcial-cla); border-color: var(--parcial); color: #8a6414; }
+  .adesao button.on.nao { background: var(--nao-cla); border-color: var(--nao); color: var(--nao); }
+  .metas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .meta { background: var(--areia); border-radius: 12px; padding: 10px; }
+  .meta small { color: var(--suave); display: block; font-size: 12px; }
+  .meta b { font-size: 18px; }
+
+  /* Progresso */
+  .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .tile { background: var(--areia); border-radius: 12px; padding: 10px 12px; }
+  .tile small { color: var(--suave); font-size: 12px; display: block; }
+  .tile b { font-size: 20px; }
+  .tile .dif { font-size: 12px; color: var(--suave); }
+  .grafico { width: 100%; height: 180px; display: block; }
+  .medicao { display: flex; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid var(--borda); font-size: 14px; align-items: center; }
+  .medicao:first-of-type { border-top: 0; }
+  .barra { height: 10px; border-radius: 99px; background: var(--areia-2); overflow: hidden; margin-top: 4px; }
+  .barra i { display: block; height: 100%; background: var(--ceruleo); border-radius: 99px; }
+  .lin-barra { margin-bottom: 10px; font-size: 14px; }
+  .lin-barra div:first-child { display: flex; justify-content: space-between; }
+
+  /* Barra de abas */
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255, 251, 245, 0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--borda);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav button {
+    border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-size: 11px; font-weight: 600; color: var(--suave); padding: 4px 0;
+  }
+  nav button svg { width: 26px; height: 26px; }
+  nav button.ativa { color: var(--ceruleo); }
+
+  /* Folha de edição */
+  .fundo {
+    position: fixed; inset: 0; background: rgba(46, 42, 36, 0.35); z-index: 30;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .fundo.aberto { display: flex; }
+  .folha {
+    background: var(--cartao); width: 100%; max-width: 620px; border-radius: 20px 20px 0 0;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); max-height: 90vh; overflow-y: auto;
+  }
+  .folha h3 { margin: 0 0 12px; font-size: 18px; }
+  .campo { margin-bottom: 12px; }
+  .campo label { display: block; font-size: 13px; font-weight: 600; color: var(--suave); margin-bottom: 4px; }
+  .campo input, .campo textarea, .campo select {
+    width: 100%; border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px;
+    background: #fff; font-size: 16px;
+  }
+  .campo textarea { min-height: 96px; resize: vertical; }
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .vazio { color: var(--suave); font-size: 14px; text-align: center; padding: 10px 0; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--ceruleo-esc); color: #fff; padding: 10px 16px; border-radius: 99px; font-size: 14px;
+    opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 40;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="marca">Ritmo</div>
+  <div class="topo">
+    <h1 id="titulo">Hábitos</h1>
+    <button class="hoje-btn" id="irHoje">Hoje</button>
+  </div>
+  <div class="datas" id="barraData">
+    <button class="seta" id="diaAnt" aria-label="Dia anterior">‹</button>
+    <div class="rotulo" id="rotuloData"></div>
+    <button class="seta" id="diaProx" aria-label="Próximo dia">›</button>
+  </div>
+</header>
+
+<main>
+  <!-- 1. HÁBITOS -->
+  <section class="aba ativa" id="aba-habitos">
+    <div class="cartao">
+      <div class="resumo" id="resumoHabitos"></div>
+    </div>
+    <div class="cartao">
+      <h2>Checklist do dia <button class="acao" id="editarHabitos">Editar</button></h2>
+      <div id="listaHabitos"></div>
+    </div>
+    <div class="cartao">
+      <h2>Últimos 7 dias</h2>
+      <div class="semana" id="semanaHabitos"></div>
+      <p class="nota">Azul forte: dia completo. Azul claro: metade ou mais. Amarelo: começou.</p>
+    </div>
+    <div class="cartao">
+      <h2><span id="nomeMed">Medicação semanal</span> <button class="acao" id="addInjecao">+ Registrar aplicação</button></h2>
+      <div id="medResumo"></div>
+      <div id="medLista"></div>
+      <p class="nota">Isto é só um diário. A dose e o intervalo são sempre definidos com a sua médica.</p>
+    </div>
+  </section>
+
+  <!-- 2. TREINO -->
+  <section class="aba" id="aba-treino">
+    <div class="aviso" id="avisoTreino"><b>Semana sugerida</b> (a ordem pode mudar): seg A · ter outra modalidade · qua B · qui outra modalidade · sex C · fim de semana livre. Em "Outras modalidades" marque o que fez no dia (pilates, luta ou outra); dá para adicionar novas em "Editar". Evite fazer A e C em dias seguidos. Aqueça 5 min antes. Quando fizer todas as repetições com folga, aumente um pouco a carga e anote em "Editar".</div>
+    <div class="chips" id="chipsTreino"></div>
+    <div class="cartao">
+      <h2><span id="nomeTreino"></span> <button class="acao" id="modoEdicaoTreino">Editar</button></h2>
+      <div id="listaExercicios"></div>
+      <div id="botoesTreino"></div>
+    </div>
+  </section>
+
+  <!-- 3. DIETA -->
+  <section class="aba" id="aba-dieta">
+    <div class="aviso" id="avisoDieta">Plano para ganhar músculo e perder ~1 kg devagar, anti-inflamatório e sem glúten. Cerca de 1.750 kcal nos dias de musculação ou luta e 1.550 nos outros. Valide com sua médica ou nutricionista. Tudo é editável em "Editar".</div>
+    <div class="cartao">
+      <div class="resumo" id="resumoDieta"></div>
+    </div>
+    <div class="cartao">
+      <h2>Metas do dia <button class="acao" id="editarMetas">Editar</button></h2>
+      <div class="metas" id="metasDieta"></div>
+    </div>
+    <div class="cartao">
+      <h2>Refeições <button class="acao" id="modoEdicaoDieta">Editar</button></h2>
+      <div id="listaRefeicoes"></div>
+      <div id="botoesDieta"></div>
+    </div>
+    <div class="cartao">
+      <h2>Aderência nos últimos 7 dias</h2>
+      <div class="semana" id="semanaDieta"></div>
+    </div>
+  </section>
+
+  <!-- 4. PROGRESSO -->
+  <section class="aba" id="aba-progresso">
+    <div class="aviso">Toque em "+ Adicionar" para registrar cada exame de bioimpedância. Ou use "Restaurar cópia" lá embaixo para trazer seus dados.</div>
+    <div class="cartao">
+      <h2>Última bioimpedância <button class="acao" id="addMedicao">+ Adicionar</button></h2>
+      <div id="tilesBio"></div>
+    </div>
+    <div class="cartao">
+      <h2>Evolução</h2>
+      <div class="chips" id="chipsMetrica"></div>
+      <div id="graficoBio"></div>
+    </div>
+    <div class="cartao">
+      <h2>Constância (últimos 30 dias)</h2>
+      <div id="constancia"></div>
+    </div>
+    <div class="cartao">
+      <h2>Histórico de medições</h2>
+      <div id="listaMedicoes"></div>
+    </div>
+    <div class="cartao">
+      <h2>Cópia de segurança</h2>
+      <p class="nota" style="margin-top:0">Seus dados ficam guardados só neste iPhone. Salve uma cópia de vez em quando (por exemplo no OneDrive ou no app Arquivos).</p>
+      <div class="linha-btns">
+        <button class="btn sec" id="exportar">Salvar cópia</button>
+        <button class="btn sec" id="importarBtn">Restaurar cópia</button>
+        <input type="file" id="importar" accept=".json,application/json" hidden>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-aba="habitos" class="ativa">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 12l3 3 5-6"/></svg>
+    Hábitos
+  </button>
+  <button data-aba="treino">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>
+    Treino
+  </button>
+  <button data-aba="dieta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4.5 0-8-3.5-8-8 0-3 2-5.5 5-5.5 1.3 0 2.2.5 3 1 .8-.5 1.7-1 3-1 3 0 5 2.5 5 5.5 0 4.5-3.5 8-8 8z"/><path d="M12 8.5c0-2.5 1.5-4.5 4-5.5"/></svg>
+    Dieta
+  </button>
+  <button data-aba="progresso">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 16l4-5 4 3 6-8"/></svg>
+    Progresso
+  </button>
+</nav>
+
+<div class="fundo" id="fundo"><div class="folha" id="folha"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   DADOS INICIAIS (exemplos)
+   Tudo aqui pode ser editado dentro do próprio app.
+   ========================================================= */
+const PADRAO = {
+  versao: 5,  // aumente quando mudar os planos padrão abaixo
+  habitos: [
+    { id: "treino",   nome: "Treino",            tipo: "check" },
+    { id: "agua",     nome: "Água",              tipo: "contador", meta: 8, unidade: "copos" },
+    { id: "proteina", nome: "Proteína",          tipo: "check", detalhe: "Bateu a meta do dia" },
+    { id: "supManha", nome: "Suplementos manhã", tipo: "check" },
+    { id: "supNoite", nome: "Suplementos noite", tipo: "check" }
+  ],
+  registroHabitos: {},      // { "2026-11-21": { treino: true, agua: 5, ... } }
+
+  // Treino: 3 musculação + 2 outras modalidades (pilates, luta etc.). Foco: ganhar músculo e perder ~1 kg de gordura.
+  treinos: [
+    { id: "A", nome: "A · Inferiores", exercicios: [
+      { id: "a1", nome: "Agachamento no smith ou goblet", series: "4", reps: "8–10", carga: "", obs: "Descanso 2 min. Termine com 2 repetições sobrando" },
+      { id: "a2", nome: "Leg press 45°", series: "3", reps: "10–12", carga: "", obs: "Termine com 2 repetições sobrando. Descanso 90 s" },
+      { id: "a3", nome: "Afundo búlgaro", series: "3", reps: "10 cada perna", carga: "", obs: "Comece só com o peso do corpo" },
+      { id: "a4", nome: "Cadeira extensora", series: "3", reps: "12–15", carga: "", obs: "Descanso 60 s" },
+      { id: "a5", nome: "Elevação pélvica (hip thrust)", series: "4", reps: "8–12", carga: "", obs: "Segure 1 s em cima" },
+      { id: "a6", nome: "Abdução na máquina", series: "3", reps: "15", carga: "", obs: "Descanso 60 s" },
+      { id: "a7", nome: "Prancha", series: "3", reps: "30–45 s", carga: "", obs: "" }
+    ]},
+    { id: "B", nome: "B · Superiores", exercicios: [
+      { id: "b1", nome: "Puxada frontal", series: "4", reps: "8–12", carga: "", obs: "Termine com 2 repetições sobrando. Descanso 90 s" },
+      { id: "b2", nome: "Supino com halteres", series: "3", reps: "8–12", carga: "", obs: "Termine com 2 repetições sobrando. Descanso 90 s" },
+      { id: "b3", nome: "Remada baixa na polia", series: "3", reps: "10–12", carga: "", obs: "Termine com 2 repetições sobrando. Descanso 90 s" },
+      { id: "b4", nome: "Desenvolvimento com halteres", series: "3", reps: "10–12", carga: "", obs: "Termine com 2 repetições sobrando. Descanso 90 s" },
+      { id: "b5", nome: "Elevação lateral", series: "3", reps: "12–15", carga: "", obs: "Descanso 60 s" },
+      { id: "b6", nome: "Rosca direta + tríceps na polia", series: "3", reps: "12 cada", carga: "", obs: "Um seguido do outro" },
+      { id: "b7", nome: "Dead bug", series: "3", reps: "10 cada lado", carga: "", obs: "Lombar colada no chão" }
+    ]},
+    { id: "C", nome: "C · Corpo todo", exercicios: [
+      { id: "c1", nome: "Levantamento terra romeno", series: "4", reps: "8–10", carga: "", obs: "Descanso 2 min. Costas retas, quadril para trás" },
+      { id: "c2", nome: "Elevação pélvica com barra", series: "3", reps: "10–12", carga: "", obs: "Termine com 2 repetições sobrando. Descanso 90 s" },
+      { id: "c3", nome: "Mesa flexora", series: "3", reps: "10–12", carga: "", obs: "Termine com 2 repetições sobrando. Descanso 90 s" },
+      { id: "c4", nome: "Remada unilateral com halter", series: "3", reps: "10 cada lado", carga: "", obs: "Termine com 2 repetições sobrando. Descanso 90 s" },
+      { id: "c5", nome: "Flexão de braço (inclinada se precisar)", series: "3", reps: "máximo", carga: "", obs: "Pare 2 antes de falhar" },
+      { id: "c6", nome: "Panturrilha em pé", series: "3", reps: "15", carga: "", obs: "Ajuda o retorno venoso das pernas" },
+      { id: "c7", nome: "Prancha lateral", series: "3", reps: "30 s cada lado", carga: "", obs: "" }
+    ]},
+    { id: "O", nome: "Outras modalidades", exercicios: [
+      { id: "o1", nome: "Pilates", series: "", reps: "50–60 min", carga: "", obs: "Mobilidade e drenagem das pernas" },
+      { id: "o2", nome: "Luta", series: "", reps: "60 min", carga: "", obs: "Se for na véspera do treino A, pegue mais leve" },
+      { id: "o3", nome: "Caminhada", series: "", reps: "30–45 min", carga: "", obs: "" },
+      { id: "o4", nome: "Natação ou hidroginástica", series: "", reps: "45 min", carga: "", obs: "Bom para a circulação das pernas" },
+      { id: "o5", nome: "Yoga ou alongamento", series: "", reps: "30–60 min", carga: "", obs: "" }
+    ]}
+  ],
+  registroTreino: {},       // { "2026-11-21": { a1: true } }
+
+  // Dieta: ganhar músculo com leve déficit
+  metasDieta: { kcal: "1.550–1.750", proteina: "130–140", agua: "2,5–3", outra: "Sem glúten" },
+  refeicoes: [
+    { id: "r1", nome: "Café da manhã", horario: "07:30", itens:
+      "Shake: 1 scoop de whey isolado sem glúten + 300 ml de leite + 1 xícara de frutas vermelhas + 2 col. (sopa) de aveia certificada sem glúten\n" +
+      "Ou: 200 g de iogurte grego + 1 scoop de whey + frutas vermelhas + 2 col. de aveia sem glúten\n" +
+      "Salgado 1: omelete de 3 ovos + 60 g de frango desfiado + espinafre e tomate + 1 tapioca pequena\n" +
+      "Salgado 2: crepioca (2 ovos + 2 col. de goma de tapioca) recheada com 100 g de frango desfiado, tomate e folhas\n" +
+      "Salgado 3: 2 fatias de pão sem glúten tostado + 1 lata de atum (ou 100 g de frango) + 1 ovo mexido + tomate\n" +
+      "Nos dias de café salgado, coma as frutas vermelhas no lanche\n" +
+      "≈ 35–40 g de proteína · 400–430 kcal" },
+    { id: "r2", nome: "Almoço", horario: "12:30", itens:
+      "½ prato: salada e legumes, com 1 col. (sopa) de azeite\n" +
+      "150–180 g de proteína: frango, peixe ou carne magra (carne vermelha 2–3×/semana; salmão ou sardinha 2×/semana)\n" +
+      "3–4 col. (sopa) de arroz + 1 concha de feijão ou lentilha (ou 150 g de batata, mandioca ou batata-doce)\n" +
+      "Suplementos do almoço: fórmula oral + diosmina\n" +
+      "≈ 45–50 g de proteína · 550 kcal" },
+    { id: "r3", nome: "Lanche", horario: "16:30", itens:
+            "Opção 1: 1 iogurte proteico (cerca de 15 g de proteína) + ½ xícara de frutas vermelhas + 1 col. (chá) de chia\n" +
+      "Opção 2: sanduíche feito em casa: 2 fatias de pão sem glúten + ½ lata de atum ou 70 g de frango desfiado + 1 col. de cottage ou requeijão light + folhas\n" +
+      "Leve numa bolsa térmica ou deixe na geladeira do escritório\n" +
+      "Dia de treino: coma 1 banana antes de treinar\n" +
+      "≈ 15–20 g de proteína · 200–250 kcal" },
+    { id: "r4", nome: "Jantar (pós-treino)", horario: "20:00", itens:
+      "Sempre: 120–150 g de proteína (frango, atum, peixe, carne ou 3 ovos + queijo) + legumes ou salada\n" +
+      "Dia de musculação ou luta: + 3 col. de arroz, 1 batata-doce pequena ou 1 tapioca\n" +
+      "Dia de descanso: carboidrato opcional, metade da porção\n" +
+      "Ideias: sanduíche sem glúten de atum ou frango · sopa de frango com legumes · omelete + iogurte grego\n" +
+      "Suplemento do jantar: ômega-3\n" +
+      "≈ 40 g de proteína · 400–500 kcal" }
+  ],
+  registroDieta: {},        // { "2026-11-21": { r1: "ok" | "parcial" | "nao" } }
+
+  bioimpedancia: [],       // uma linha por exame
+
+  medicacao: { nome: "Medicação semanal", intervaloDias: 7, aplicacoes: [] }  // aplicacoes: [{ id, data, dose, local, notas }]
+};
+
+const CHAVE = "disciplina-dados-v1";
+
+/* ---------- Guardar / carregar ---------- */
+function carregar() {
+  try {
+    const salvo = JSON.parse(localStorage.getItem(CHAVE));
+    if (salvo && typeof salvo === "object") return Object.assign(structuredClone(PADRAO), salvo);
+  } catch (e) {}
+  return structuredClone(PADRAO);
+}
+let D = carregar();
+// Atualiza dados salvos de uma versão antiga: troca o treino e a dieta pelos novos (mantém o que você marcou)
+if ((D.versao || 1) < PADRAO.versao) {
+  D.treinos = structuredClone(PADRAO.treinos);
+  D.refeicoes = structuredClone(PADRAO.refeicoes);
+  D.metasDieta = structuredClone(PADRAO.metasDieta);
+  D.versao = PADRAO.versao;
+  try { localStorage.setItem(CHAVE, JSON.stringify(D)); } catch (e) {}
+}
+// Dados de versões antigas guardavam a medicação com outro nome
+if (D.mounjaro) { D.medicacao = { nome: "Medicação semanal", ...D.mounjaro }; delete D.mounjaro; }
+function salvar() {
+  try { localStorage.setItem(CHAVE, JSON.stringify(D)); } catch (e) { aviso("Não consegui salvar"); }
+}
+
+/* ---------- Utilidades ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const chaveData = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const deChave = (k) => { const [a, m, d] = k.split("-").map(Number); return new Date(a, m - 1, d); };
+const somaDias = (k, n) => { const d = deChave(k); d.setDate(d.getDate() + n); return chaveData(d); };
+const hoje = () => chaveData(new Date());
+const DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const dataCurta = (k) => { const d = deChave(k); return `${d.getDate()} ${MESES[d.getMonth()]}`; };
+const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isNaN(n) ? null : n; };
+const fmt = (n, c = 1) => n == null ? "–" : n.toLocaleString("pt-BR", { maximumFractionDigits: c });
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+
+function aviso(t) {
+  const el = $("#toast"); el.textContent = t; el.classList.add("show");
+  clearTimeout(aviso._t); aviso._t = setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+function anel(pct) {
+  const r = 27, c = 2 * Math.PI * r, v = Math.max(0, Math.min(1, pct));
+  return `<svg class="anel" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--areia-2)" stroke-width="7"/>
+    <circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--ceruleo)" stroke-width="7" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - v)}" transform="rotate(-90 32 32)"/>
+    <text x="32" y="37" text-anchor="middle" font-size="15" font-weight="700" fill="var(--texto)">${Math.round(v * 100)}%</text>
+  </svg>`;
+}
+function corPct(p) {
+  if (p == null) return "background:var(--areia-2);color:var(--suave)";
+  if (p >= 0.999) return "background:var(--ceruleo);color:#fff";
+  if (p >= 0.5) return "background:var(--ceruleo-cla);color:var(--ceruleo-esc)";
+  if (p > 0) return "background:var(--parcial-cla);color:#8a6414";
+  return "background:var(--areia-2);color:var(--suave)";
+}
+
+/* ---------- Estado da tela ---------- */
+let dia = hoje();
+let aba = "habitos";
+let treinoSel = D.treinos[0]?.id;
+let editandoTreino = false, editandoDieta = false;
+let metricaSel = "peso";
+
+/* =========================================================
+   FORMULÁRIO GENÉRICO (folha que sobe de baixo)
+   ========================================================= */
+function abrirForm({ titulo, campos, valores = {}, salvarTxt = "Salvar", aoSalvar, aoApagar, extra = "" }) {
+  const html = campos.map((c) => {
+    if (c.duas) return `<div class="duas">${c.duas.map(campoHtml).join("")}</div>`;
+    return campoHtml(c);
+  }).join("");
+  function campoHtml(c) {
+    const v = esc(valores[c.k] ?? c.padrao ?? "");
+    let input;
+    if (c.tipo === "textarea") input = `<textarea name="${c.k}" placeholder="${esc(c.ph || "")}">${v}</textarea>`;
+    else if (c.tipo === "select") input = `<select name="${c.k}">${c.opcoes.map((o) => `<option ${o === (valores[c.k] ?? c.padrao) ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+    else input = `<input name="${c.k}" type="${c.tipo || "text"}" ${c.tipo === "number" ? 'inputmode="decimal" step="any"' : ""} value="${v}" placeholder="${esc(c.ph || "")}">`;
+    return `<div class="campo"><label>${esc(c.rotulo)}</label>${input}</div>`;
+  }
+  $("#folha").innerHTML = `<h3>${esc(titulo)}</h3><form id="formFolha">${html}${extra}
+    <div class="linha-btns"><button type="button" class="btn sec" id="fCancelar">Cancelar</button><button class="btn" type="submit">${esc(salvarTxt)}</button></div>
+    ${aoApagar ? '<div class="linha-btns"><button type="button" class="btn perigo cheio" id="fApagar">Apagar</button></div>' : ""}
+  </form>`;
+  $("#fundo").classList.add("aberto");
+  $("#fCancelar").onclick = fecharForm;
+  $("#formFolha").onsubmit = (e) => {
+    e.preventDefault();
+    const dados = Object.fromEntries(new FormData(e.target).entries());
+    if (aoSalvar(dados) !== false) { fecharForm(); salvar(); render(); }
+  };
+  if (aoApagar) $("#fApagar").onclick = () => {
+    if (confirm("Apagar mesmo?")) { aoApagar(); fecharForm(); salvar(); render(); }
+  };
+}
+function fecharForm() { $("#fundo").classList.remove("aberto"); }
+$("#fundo").addEventListener("click", (e) => { if (e.target.id === "fundo") fecharForm(); });
+
+/* =========================================================
+   1. HÁBITOS
+   ========================================================= */
+function regHab(k) { return (D.registroHabitos[k] ||= {}); }
+function feito(h, r) { return h.tipo === "contador" ? (r[h.id] || 0) >= (h.meta || 1) : !!r[h.id]; }
+function pctHabitos(k) {
+  const r = D.registroHabitos[k];
+  if (!r || !D.habitos.length) return r ? 0 : null;
+  return D.habitos.filter((h) => feito(h, r)).length / D.habitos.length;
+}
+
+function renderHabitos() {
+  const r = D.registroHabitos[dia] || {};
+  const n = D.habitos.filter((h) => feito(h, r)).length;
+  const p = D.habitos.length ? n / D.habitos.length : 0;
+  $("#resumoHabitos").innerHTML = `${anel(p)}<div><strong>${n} de ${D.habitos.length} hábitos</strong>
+    <span class="nota">${p >= 1 ? "Dia completo. Muito bem!" : "Toque nos quadrados para marcar."}</span></div>`;
+
+  $("#listaHabitos").innerHTML = D.habitos.map((h) => {
+    if (h.tipo === "contador") {
+      const v = r[h.id] || 0;
+      return `<div class="habito"><div class="nome">${esc(h.nome)}<small>meta: ${h.meta} ${esc(h.unidade || "")}</small></div>
+        <div class="contador"><button data-menos="${h.id}" aria-label="menos">−</button>
+        <span class="${v >= h.meta ? "feito" : ""}">${v}/${h.meta}</span>
+        <button data-mais="${h.id}" aria-label="mais">+</button></div></div>`;
+    }
+    return `<div class="habito"><div class="nome">${esc(h.nome)}${h.detalhe ? `<small>${esc(h.detalhe)}</small>` : ""}</div>
+      <button class="check ${r[h.id] ? "on" : ""}" data-hab="${h.id}" aria-label="${esc(h.nome)}">${CHECK_SVG}</button></div>`;
+  }).join("") || '<div class="vazio">Nenhum hábito. Toque em Editar para adicionar.</div>';
+
+  $("#semanaHabitos").innerHTML = semana((k) => pctHabitos(k));
+  renderMedicacao();
+}
+
+function semana(fn) {
+  let html = "";
+  for (let i = 6; i >= 0; i--) {
+    const k = somaDias(dia, -i), p = fn(k);
+    html += `<div class="${k === dia ? "sel" : ""}" data-ir="${k}"><div class="dia">${DIAS[deChave(k).getDay()]}</div>
+      <div class="bolinha" style="${corPct(p)}">${deChave(k).getDate()}</div></div>`;
+  }
+  return html;
+}
+
+$("#listaHabitos").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const r = regHab(dia);
+  if (b.dataset.hab) r[b.dataset.hab] = !r[b.dataset.hab];
+  if (b.dataset.mais) r[b.dataset.mais] = (r[b.dataset.mais] || 0) + 1;
+  if (b.dataset.menos) r[b.dataset.menos] = Math.max(0, (r[b.dataset.menos] || 0) - 1);
+  salvar(); render();
+});
+
+$("#editarHabitos").onclick = () => {
+  const lista = D.habitos.map((h, i) => `<div class="medicao"><span>${esc(h.nome)}</span>
+    <button type="button" class="editar-ico" data-edh="${i}">Editar</button></div>`).join("");
+  $("#folha").innerHTML = `<h3>Editar hábitos</h3>${lista}
+    <div class="linha-btns"><button class="btn sec" id="novoHab">+ Novo hábito</button><button class="btn" id="fecharHab">Pronto</button></div>`;
+  $("#fundo").classList.add("aberto");
+  $("#fecharHab").onclick = fecharForm;
+  $("#novoHab").onclick = () => formHabito();
+  $("#folha").querySelectorAll("[data-edh]").forEach((b) => b.onclick = () => formHabito(+b.dataset.edh));
+};
+function formHabito(i) {
+  const h = i != null ? D.habitos[i] : {};
+  abrirForm({
+    titulo: i != null ? "Editar hábito" : "Novo hábito",
+    valores: { ...h, tipo: h.tipo === "contador" ? "Contador (ex.: copos)" : "Marcar sim/não" },
+    campos: [
+      { k: "nome", rotulo: "Nome" },
+      { k: "detalhe", rotulo: "Descrição curta (opcional)" },
+      { k: "tipo", rotulo: "Tipo", tipo: "select", opcoes: ["Marcar sim/não", "Contador (ex.: copos)"] },
+      { duas: [{ k: "meta", rotulo: "Meta (se contador)", tipo: "number", padrao: 8 }, { k: "unidade", rotulo: "Unidade", ph: "copos" }] }
+    ],
+    aoSalvar: (v) => {
+      if (!v.nome.trim()) return false;
+      const novo = { id: h.id || uid(), nome: v.nome.trim(), detalhe: v.detalhe.trim(),
+        tipo: v.tipo.startsWith("Contador") ? "contador" : "check", meta: num(v.meta) || 1, unidade: v.unidade.trim() };
+      if (i != null) D.habitos[i] = novo; else D.habitos.push(novo);
+    },
+    aoApagar: i != null ? () => D.habitos.splice(i, 1) : null
+  });
+}
+
+/* ---------- Medicação ---------- */
+function renderMedicacao() {
+  $("#nomeMed").textContent = D.medicacao.nome || "Medicação semanal";
+  const ap = [...D.medicacao.aplicacoes].sort((a, b) => b.data.localeCompare(a.data));
+  const ult = ap[0];
+  let res = '<div class="vazio">Nenhuma aplicação registrada ainda.</div>';
+  if (ult) {
+    const prox = somaDias(ult.data, D.medicacao.intervaloDias);
+    const faltam = Math.round((deChave(prox) - deChave(hoje())) / 864e5);
+    const txt = faltam > 0 ? `em ${faltam} dia${faltam > 1 ? "s" : ""}` : faltam === 0 ? "hoje" : `há ${-faltam} dia${faltam < -1 ? "s" : ""}`;
+    res = `<div class="tiles">
+      <div class="tile"><small>Última aplicação</small><b>${dataCurta(ult.data)}</b><div class="dif">${esc(ult.dose)}${ult.local ? " · " + esc(ult.local) : ""}</div></div>
+      <div class="tile"><small>Próxima prevista</small><b>${dataCurta(prox)}</b><div class="dif">${txt}</div></div></div>`;
+  }
+  $("#medResumo").innerHTML = res + `<p class="nota">Intervalo usado no lembrete: a cada ${D.medicacao.intervaloDias} dias.
+    <button class="acao" style="border:0;background:none;color:var(--ceruleo);font-weight:600;padding:0" id="mudarIntervalo">Mudar</button></p>`;
+  $("#medLista").innerHTML = ap.slice(0, 6).map((a) => `<div class="medicao"><span>${dataCurta(a.data)} · ${esc(a.dose)}${a.local ? " · " + esc(a.local) : ""}${a.notas ? `<br><small style="color:var(--suave)">${esc(a.notas)}</small>` : ""}</span>
+    <button class="editar-ico" data-inj="${a.id}">Editar</button></div>`).join("");
+  $("#mudarIntervalo").onclick = () => abrirForm({
+    titulo: "Intervalo entre aplicações", valores: { d: D.medicacao.intervaloDias },
+    campos: [{ k: "d", rotulo: "A cada quantos dias? (como sua médica orientou)", tipo: "number" }],
+    aoSalvar: (v) => { const n = num(v.d); if (!n || n < 1) return false; D.medicacao.intervaloDias = Math.round(n); }
+  });
+  $("#medLista").querySelectorAll("[data-inj]").forEach((b) => b.onclick = () => formInjecao(b.dataset.inj));
+}
+function formInjecao(id) {
+  const a = D.medicacao.aplicacoes.find((x) => x.id === id);
+  const ultima = [...D.medicacao.aplicacoes].sort((x, y) => y.data.localeCompare(x.data))[0];
+  abrirForm({
+    titulo: a ? "Editar aplicação" : "Registrar aplicação",
+    valores: a || { data: hoje(), dose: ultima?.dose || "", local: "" },
+    campos: [
+      { duas: [{ k: "data", rotulo: "Data", tipo: "date" }, { k: "dose", rotulo: "Dose" }] },
+      { k: "local", rotulo: "Local da aplicação", tipo: "select", opcoes: ["", "Abdômen esquerdo", "Abdômen direito", "Coxa esquerda", "Coxa direita", "Braço esquerdo", "Braço direito"] },
+      { k: "notas", rotulo: "Como se sentiu? (opcional)", tipo: "textarea", ph: "Ex.: enjoo leve, fome menor..." }
+    ],
+    aoSalvar: (v) => {
+      if (!v.data) return false;
+      const novo = { id: a?.id || uid(), ...v };
+      if (a) Object.assign(a, novo); else D.medicacao.aplicacoes.push(novo);
+    },
+    aoApagar: a ? () => { D.medicacao.aplicacoes = D.medicacao.aplicacoes.filter((x) => x.id !== id); } : null
+  });
+}
+$("#addInjecao").onclick = () => formInjecao();
+
+/* =========================================================
+   2. TREINO
+   ========================================================= */
+function renderTreino() {
+  if (!D.treinos.find((t) => t.id === treinoSel)) treinoSel = D.treinos[0]?.id;
+  $("#chipsTreino").innerHTML = D.treinos.map((t) => `<button class="chip ${t.id === treinoSel ? "on" : ""}" data-t="${t.id}">${esc(t.nome)}</button>`).join("")
+    + (editandoTreino ? `<button class="chip" id="novoTreino">+ Novo treino</button>` : "");
+  const t = D.treinos.find((x) => x.id === treinoSel);
+  $("#modoEdicaoTreino").textContent = editandoTreino ? "Pronto" : "Editar";
+  if (!t) {
+    $("#nomeTreino").textContent = "Sem treinos";
+    $("#listaExercicios").innerHTML = '<div class="vazio">Toque em Editar e depois em "+ Novo treino".</div>';
+    $("#botoesTreino").innerHTML = ""; return;
+  }
+  $("#nomeTreino").textContent = t.nome;
+  const reg = D.registroTreino[dia] || {};
+  $("#listaExercicios").innerHTML = t.exercicios.map((e) => `<div class="ex">
+      <div class="info"><b>${esc(e.nome)}</b>
+        <span>${[e.series && e.reps ? `${esc(e.series)} × ${esc(e.reps)}` : esc(e.series || e.reps), e.carga ? esc(e.carga) : ""].filter(Boolean).join(" · ")}</span>
+        ${e.obs ? `<em>${esc(e.obs)}</em>` : ""}</div>
+      ${editandoTreino ? `<button class="editar-ico" data-ex="${e.id}">Editar</button>` : `<button class="check ${reg[e.id] ? "on" : ""}" data-feito="${e.id}" aria-label="feito">${CHECK_SVG}</button>`}
+    </div>`).join("") || '<div class="vazio">Nenhum exercício ainda.</div>';
+
+  $("#botoesTreino").innerHTML = editandoTreino
+    ? `<div class="linha-btns"><button class="btn sec" id="novoEx">+ Exercício</button><button class="btn sec" id="renomearTreino">Renomear / apagar treino</button></div>`
+    : `<div class="linha-btns"><button class="btn cheio" id="concluirTreino">${(D.registroHabitos[dia] || {}).treino ? "✓ Treino do dia marcado" : "Concluí o treino de hoje"}</button></div>`;
+}
+$("#chipsTreino").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "novoTreino") return formTreino();
+  treinoSel = b.dataset.t; render();
+});
+$("#modoEdicaoTreino").onclick = () => { editandoTreino = !editandoTreino; render(); };
+$("#aba-treino").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const t = D.treinos.find((x) => x.id === treinoSel);
+  if (b.dataset.feito) { const r = (D.registroTreino[dia] ||= {}); r[b.dataset.feito] = !r[b.dataset.feito]; salvar(); render(); }
+  if (b.dataset.ex) formExercicio(t, b.dataset.ex);
+  if (b.id === "novoEx") formExercicio(t);
+  if (b.id === "renomearTreino") formTreino(t);
+  if (b.id === "concluirTreino") { const r = regHab(dia); r.treino = !r.treino; salvar(); render(); aviso(r.treino ? "Treino marcado nos hábitos" : "Desmarcado"); }
+});
+function formTreino(t) {
+  abrirForm({
+    titulo: t ? "Treino" : "Novo treino", valores: t || {},
+    campos: [{ k: "nome", rotulo: "Nome do treino", ph: "Ex.: Treino C, Inferiores, Segunda" }],
+    aoSalvar: (v) => {
+      if (!v.nome.trim()) return false;
+      if (t) t.nome = v.nome.trim();
+      else { const n = { id: uid(), nome: v.nome.trim(), exercicios: [] }; D.treinos.push(n); treinoSel = n.id; }
+    },
+    aoApagar: t ? () => { D.treinos = D.treinos.filter((x) => x !== t); } : null
+  });
+}
+function formExercicio(t, id) {
+  const e = t.exercicios.find((x) => x.id === id);
+  abrirForm({
+    titulo: e ? "Editar exercício" : "Novo exercício", valores: e || {},
+    campos: [
+      { k: "nome", rotulo: "Exercício", ph: "Ex.: Agachamento livre" },
+      { duas: [{ k: "series", rotulo: "Séries", ph: "3" }, { k: "reps", rotulo: "Repetições", ph: "10 a 12" }] },
+      { k: "carga", rotulo: "Carga / tempo", ph: "Ex.: 20 kg, 30 s" },
+      { k: "obs", rotulo: "Observações", tipo: "textarea", ph: "Ex.: descanso 60 s, foco na postura" }
+    ],
+    aoSalvar: (v) => {
+      if (!v.nome.trim()) return false;
+      if (e) Object.assign(e, v); else t.exercicios.push({ id: uid(), ...v });
+    },
+    aoApagar: e ? () => { t.exercicios = t.exercicios.filter((x) => x !== e); } : null
+  });
+}
+
+/* =========================================================
+   3. DIETA
+   ========================================================= */
+const PESO = { ok: 1, parcial: 0.5, nao: 0 };
+function pctDieta(k) {
+  const r = D.registroDieta[k];
+  if (!r || !D.refeicoes.length) return null;
+  const marc = D.refeicoes.filter((m) => r[m.id]);
+  if (!marc.length) return null;
+  return D.refeicoes.reduce((s, m) => s + (PESO[r[m.id]] || 0), 0) / D.refeicoes.length;
+}
+function renderDieta() {
+  const r = D.registroDieta[dia] || {};
+  const p = pctDieta(dia) || 0;
+  const marcadas = D.refeicoes.filter((m) => r[m.id]).length;
+  $("#resumoDieta").innerHTML = `${anel(p)}<div><strong>Aderência à dieta</strong>
+    <span class="nota">${marcadas} de ${D.refeicoes.length} refeições marcadas. "Parcial" conta como meio ponto.</span></div>`;
+
+  const M = D.metasDieta;
+  $("#metasDieta").innerHTML = [["Calorias", M.kcal, "kcal"], ["Proteína", M.proteina, "g"], ["Água", M.agua, "L"], ["Outra meta", M.outra, ""]]
+    .map(([n, v, u]) => `<div class="meta"><small>${n}</small><b>${v ? esc(v) + (u ? " " + u : "") : "–"}</b></div>`).join("");
+
+  $("#modoEdicaoDieta").textContent = editandoDieta ? "Pronto" : "Editar";
+  $("#listaRefeicoes").innerHTML = D.refeicoes.map((m) => `<div class="refeicao">
+      <div class="cab"><b>${esc(m.nome)}</b><small>${esc(m.horario || "")}</small></div>
+      ${m.itens ? `<div class="itens">${esc(m.itens)}</div>` : ""}
+      ${editandoDieta ? `<button class="editar-ico" data-ref="${m.id}">Editar refeição</button>` :
+      `<div class="adesao">
+        <button class="ok ${r[m.id] === "ok" ? "on" : ""}" data-m="${m.id}" data-v="ok">✓ Segui</button>
+        <button class="parcial ${r[m.id] === "parcial" ? "on" : ""}" data-m="${m.id}" data-v="parcial">≈ Parcial</button>
+        <button class="nao ${r[m.id] === "nao" ? "on" : ""}" data-m="${m.id}" data-v="nao">✕ Não segui</button>
+      </div>`}
+    </div>`).join("") || '<div class="vazio">Nenhuma refeição. Toque em Editar.</div>';
+  $("#botoesDieta").innerHTML = editandoDieta ? `<div class="linha-btns"><button class="btn sec cheio" id="novaRef">+ Refeição</button></div>` : "";
+  $("#semanaDieta").innerHTML = semana(pctDieta);
+}
+$("#modoEdicaoDieta").onclick = () => { editandoDieta = !editandoDieta; render(); };
+$("#aba-dieta").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.m) {
+    const r = (D.registroDieta[dia] ||= {});
+    r[b.dataset.m] = r[b.dataset.m] === b.dataset.v ? undefined : b.dataset.v;
+    salvar(); render();
+  }
+  if (b.dataset.ref) formRefeicao(b.dataset.ref);
+  if (b.id === "novaRef") formRefeicao();
+});
+function formRefeicao(id) {
+  const m = D.refeicoes.find((x) => x.id === id);
+  abrirForm({
+    titulo: m ? "Editar refeição" : "Nova refeição", valores: m || {},
+    campos: [
+      { duas: [{ k: "nome", rotulo: "Refeição", ph: "Ex.: Ceia" }, { k: "horario", rotulo: "Horário", tipo: "time" }] },
+      { k: "itens", rotulo: "O que comer (uma linha por item)", tipo: "textarea", ph: "Ex.:\n2 ovos\n1 fatia de pão integral" }
+    ],
+    aoSalvar: (v) => {
+      if (!v.nome.trim()) return false;
+      if (m) Object.assign(m, v); else D.refeicoes.push({ id: uid(), ...v });
+    },
+    aoApagar: m ? () => { D.refeicoes = D.refeicoes.filter((x) => x !== m); } : null
+  });
+}
+$("#editarMetas").onclick = () => abrirForm({
+  titulo: "Metas do dia", valores: D.metasDieta,
+  campos: [
+    { duas: [{ k: "kcal", rotulo: "Calorias (kcal)" }, { k: "proteina", rotulo: "Proteína (g)" }] },
+    { duas: [{ k: "agua", rotulo: "Água (litros)" }, { k: "outra", rotulo: "Outra meta", ph: "Ex.: 30 g fibra" }] }
+  ],
+  aoSalvar: (v) => { D.metasDieta = v; }
+});
+
+/* =========================================================
+   4. PROGRESSO
+   ========================================================= */
+// tile: aparece nos quadros do topo. ref: faixa de referência do laudo.
+const METRICAS = [
+  { k: "peso", n: "Peso", u: "kg", tile: true, ref: "55,3–74,8" },
+  { k: "gordura", n: "% Gordura", u: "%", tile: true, ref: "< 28" },
+  { k: "massaGordura", n: "Massa de gordura", u: "kg", tile: true, ref: "13,0–20,8" },
+  { k: "musculo", n: "Massa muscular", u: "kg", tile: true },
+  { k: "visceral", n: "Gordura visceral", u: "", tile: true, ref: "1–9" },
+  { k: "imc", n: "IMC", u: "", tile: true, ref: "18,5–25" },
+  { k: "gordPernas", n: "Gordura nas pernas", u: "kg", calc: (b) => (num(b.gordPernaE) != null && num(b.gordPernaD) != null ? num(b.gordPernaE) + num(b.gordPernaD) : null) },
+  { k: "gordTronco", n: "Gordura no tronco", u: "kg" },
+  { k: "agua", n: "Água corporal", u: "L", ref: "33,1–40,5" },
+  { k: "proteina", n: "Proteína", u: "kg", ref: "8,9–10,9" },
+  { k: "minerais", n: "Minerais", u: "kg", ref: "3,07–3,75" },
+  { k: "tmb", n: "Taxa metabólica basal", u: "kcal", ref: "1392–1620" }
+];
+const valorMet = (b, m) => (m.calc ? m.calc(b) : num(b[m.k]));
+function renderProgresso() {
+  const bio = [...D.bioimpedancia].sort((a, b) => a.data.localeCompare(b.data));
+  const ult = bio[bio.length - 1], ant = bio[bio.length - 2];
+  $("#tilesBio").innerHTML = !ult ? '<div class="vazio">Nenhuma medição ainda.</div>' :
+    `<p class="nota" style="margin:0 0 8px">${dataCurta(ult.data)} ${deChave(ult.data).getFullYear()}</p><div class="tiles">` +
+    METRICAS.filter((m) => m.tile).map((m) => {
+      const v = valorMet(ult, m), a = ant ? valorMet(ant, m) : null;
+      const pri = bio.find((b) => valorMet(b, m) != null), p0 = pri && pri !== ult ? valorMet(pri, m) : null;
+      const sinal = (d) => (d > 0 ? "+" : d < 0 ? "−" : "") + fmt(Math.abs(d));
+      return `<div class="tile"><small>${m.n}</small><b>${fmt(v)}${v != null && m.u ? " " + m.u : ""}</b>
+        <div class="dif">${a != null && v != null ? sinal(v - a) + " vs exame anterior" : "&nbsp;"}</div>
+        <div class="dif">${p0 != null && v != null ? sinal(v - p0) + " desde " + MESES[deChave(pri.data).getMonth()] + "/" + String(deChave(pri.data).getFullYear()).slice(2) : ""}</div>
+        ${m.ref ? `<div class="dif">ref.: ${m.ref}</div>` : ""}</div>`;
+    }).join("") + "</div>";
+
+  $("#chipsMetrica").innerHTML = METRICAS.map((m) => `<button class="chip ${m.k === metricaSel ? "on" : ""}" data-met="${m.k}">${m.n}</button>`).join("");
+  const mSel = METRICAS.find((m) => m.k === metricaSel);
+  $("#graficoBio").innerHTML = grafico(bio.filter((b) => valorMet(b, mSel) != null).map((b) => [b.data, valorMet(b, mSel)]))
+    + `<p class="nota">${mSel.n}${mSel.u ? " (" + mSel.u + ")" : ""}${mSel.ref ? " · referência: " + mSel.ref : ""}</p>`;
+
+  // constância
+  let somaH = 0, nH = 0, somaD = 0, nD = 0;
+  for (let i = 0; i < 30; i++) {
+    const k = somaDias(hoje(), -i);
+    const ph = pctHabitos(k); if (ph != null) { somaH += ph; nH++; }
+    const pd = pctDieta(k); if (pd != null) { somaD += pd; nD++; }
+  }
+  const barra = (t, v, n) => `<div class="lin-barra"><div><span>${t}</span><b>${n ? Math.round(v * 100) + "%" : "–"}</b></div><div class="barra"><i style="width:${n ? v * 100 : 0}%"></i></div><small style="color:var(--suave)">${n} dia${n === 1 ? "" : "s"} com registro</small></div>`;
+  $("#constancia").innerHTML = barra("Hábitos", nH ? somaH / nH : 0, nH) + barra("Dieta", nD ? somaD / nD : 0, nD);
+
+  $("#listaMedicoes").innerHTML = bio.slice().reverse().map((b) => `<div class="medicao">
+    <span><b>${dataCurta(b.data)} ${deChave(b.data).getFullYear()}</b><br><small style="color:var(--suave)">${fmt(num(b.peso))} kg · ${fmt(num(b.gordura))}% gordura · ${fmt(num(b.musculo))} kg músculo${b.notas ? "<br>" + esc(b.notas) : ""}</small></span>
+    <button class="editar-ico" data-bio="${b.id}">Editar</button></div>`).join("") || '<div class="vazio">Nada por aqui ainda.</div>';
+}
+function grafico(pts) {
+  if (pts.length < 2) return '<div class="vazio">O gráfico aparece a partir de 2 medições.</div>';
+  const W = 320, H = 180, p = { l: 36, r: 12, t: 14, b: 26 };
+  const vs = pts.map((x) => x[1]); let mn = Math.min(...vs), mx = Math.max(...vs);
+  if (mn === mx) { mn -= 1; mx += 1; }
+  const pad = (mx - mn) * 0.15; mn -= pad; mx += pad;
+  const t0 = deChave(pts[0][0]).getTime(), t1 = deChave(pts[pts.length - 1][0]).getTime() || t0 + 1;
+  const X = (k) => p.l + ((deChave(k).getTime() - t0) / (t1 - t0 || 1)) * (W - p.l - p.r);
+  const Y = (v) => p.t + (1 - (v - mn) / (mx - mn)) * (H - p.t - p.b);
+  const linha = pts.map((x, i) => `${i ? "L" : "M"}${X(x[0]).toFixed(1)},${Y(x[1]).toFixed(1)}`).join("");
+  const grade = [0, 0.5, 1].map((f) => { const v = mn + (mx - mn) * f, y = Y(v);
+    return `<line x1="${p.l}" x2="${W - p.r}" y1="${y}" y2="${y}" stroke="var(--borda)"/><text x="${p.l - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="var(--suave)">${fmt(v)}</text>`; }).join("");
+  return `<svg class="grafico" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${grade}
+    <path d="${linha}" fill="none" stroke="var(--ceruleo)" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+    ${pts.map((x) => `<circle cx="${X(x[0])}" cy="${Y(x[1])}" r="3.5" fill="var(--ceruleo)"/>`).join("")}
+    <text x="${p.l}" y="${H - 6}" font-size="10" fill="var(--suave)">${dataCurta(pts[0][0])}</text>
+    <text x="${W - p.r}" y="${H - 6}" font-size="10" text-anchor="end" fill="var(--suave)">${dataCurta(pts[pts.length - 1][0])}</text></svg>`;
+}
+$("#chipsMetrica").addEventListener("click", (e) => { const b = e.target.closest("[data-met]"); if (b) { metricaSel = b.dataset.met; render(); } });
+$("#listaMedicoes").addEventListener("click", (e) => { const b = e.target.closest("[data-bio]"); if (b) formBio(b.dataset.bio); });
+$("#addMedicao").onclick = () => formBio();
+function formBio(id) {
+  const b = D.bioimpedancia.find((x) => x.id === id);
+  abrirForm({
+    titulo: b ? "Editar medição" : "Nova medição", valores: b || { data: hoje() },
+    campos: (() => {
+      const c = METRICAS.filter((m) => !m.calc).map((m) => ({ k: m.k, rotulo: m.n + (m.u ? ` (${m.u})` : ""), tipo: "number" }))
+        .concat([{ k: "gordPernaE", rotulo: "Gordura perna esq. (kg)", tipo: "number" }, { k: "gordPernaD", rotulo: "Gordura perna dir. (kg)", tipo: "number" }]);
+      const pares = []; for (let i = 0; i < c.length; i += 2) pares.push({ duas: c.slice(i, i + 2) });
+      return [{ k: "data", rotulo: "Data", tipo: "date" }, ...pares, { k: "notas", rotulo: "Notas", tipo: "textarea", ph: "Ex.: laboratório, aparelho" }];
+    })(),
+    aoSalvar: (v) => { if (!v.data) return false; if (b) Object.assign(b, v); else D.bioimpedancia.push({ id: uid(), ...v }); },
+    aoApagar: b ? () => { D.bioimpedancia = D.bioimpedancia.filter((x) => x !== b); } : null
+  });
+}
+
+/* ---------- Cópia de segurança ---------- */
+$("#exportar").onclick = async () => {
+  const nome = `ritmo-backup-${hoje()}.json`;
+  const blob = new Blob([JSON.stringify(D, null, 2)], { type: "application/json" });
+  const arq = new File([blob], nome, { type: "application/json" });
+  if (navigator.canShare && navigator.canShare({ files: [arq] })) {
+    try { await navigator.share({ files: [arq], title: nome }); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$("#importarBtn").onclick = () => $("#importar").click();
+$("#importar").onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const dados = JSON.parse(await f.text());
+    if (!dados || !dados.habitos) throw 0;
+    if (!confirm("Isto vai substituir os dados atuais pelos da cópia. Continuar?")) return;
+    D = Object.assign(structuredClone(PADRAO), dados); salvar(); render(); aviso("Cópia restaurada");
+  } catch (_) { aviso("Arquivo inválido"); }
+  e.target.value = "";
+};
+
+/* =========================================================
+   NAVEGAÇÃO
+   ========================================================= */
+const TITULOS = { habitos: "Hábitos", treino: "Treino", dieta: "Dieta", progresso: "Progresso" };
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
+  aba = b.dataset.aba;
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("ativa", x === b));
+  document.querySelectorAll("section.aba").forEach((s) => s.classList.toggle("ativa", s.id === "aba-" + aba));
+  window.scrollTo(0, 0); render();
+});
+$("#diaAnt").onclick = () => { dia = somaDias(dia, -1); render(); };
+$("#diaProx").onclick = () => { dia = somaDias(dia, 1); render(); };
+$("#irHoje").onclick = () => { dia = hoje(); render(); };
+document.addEventListener("click", (e) => { const s = e.target.closest("[data-ir]"); if (s) { dia = s.dataset.ir; render(); } });
+
+function render() {
+  $("#titulo").textContent = TITULOS[aba];
+  const comData = aba !== "progresso";
+  $("#barraData").style.display = comData ? "" : "none";
+  $("#irHoje").style.visibility = comData && dia !== hoje() ? "visible" : "hidden";
+  const d = deChave(dia), dif = Math.round((d - deChave(hoje())) / 864e5);
+  const rel = dif === 0 ? "Hoje" : dif === -1 ? "Ontem" : dif === 1 ? "Amanhã" : DIAS[d.getDay()];
+  $("#rotuloData").innerHTML = `${rel}<small>${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}</small>`;
+  if (aba === "habitos") renderHabitos();
+  if (aba === "treino") renderTreino();
+  if (aba === "dieta") renderDieta();
+  if (aba === "progresso") renderProgresso();
+}
+render();
+
+// Volta para "hoje" se o app ficou aberto de um dia para o outro
+let ultimoHoje = hoje();
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && hoje() !== ultimoHoje) { if (dia === ultimoHoje) dia = hoje(); ultimoHoje = hoje(); render(); }
+});
+
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
