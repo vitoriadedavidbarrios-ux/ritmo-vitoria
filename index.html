@@ -459,8 +459,6 @@ if ((D.versao || 1) < PADRAO.versao) {
   D.versao = PADRAO.versao;
   try { localStorage.setItem(CHAVE, JSON.stringify(D)); } catch (e) {}
 }
-// Dados de versões antigas guardavam a medicação com outro nome
-if (D.mounjaro) { D.medicacao = { nome: "Medicação semanal", ...D.mounjaro }; delete D.mounjaro; }
 function salvar() {
   try { localStorage.setItem(CHAVE, JSON.stringify(D)); } catch (e) { aviso("Não consegui salvar"); }
 }
